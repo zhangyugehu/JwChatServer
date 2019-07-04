@@ -1,6 +1,6 @@
 package com.zhangyugehu.web.jwchat.push;
 
-import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
+import com.zhangyugehu.web.jwchat.push.provider.GsonProvider;
 import com.zhangyugehu.web.jwchat.push.service.AccountService;
 import com.zhangyugehu.web.jwchat.push.service.BService;
 import org.glassfish.jersey.server.ResourceConfig;
@@ -12,8 +12,7 @@ public class Application extends ResourceConfig {
         packages(AccountService.class.getPackage().getName());
         packages(BService.class.getPackage().getName());
 
-        register(JacksonJsonProvider.class);
-
+        register(GsonProvider.class);
         register(Logger.class);
     }
 }
