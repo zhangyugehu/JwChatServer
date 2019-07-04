@@ -36,6 +36,18 @@ public class UserFactory {
     }
 
     /**
+     * 更新用户信息到数据库
+     * @param user
+     * @return
+     */
+    public static User update(User user) {
+        return Hib.query(session -> {
+            session.saveOrUpdate(user);
+            return user;
+        });
+    }
+
+    /**
      * 给当前账户绑定PushId
      * @param user
      * @param pushId
@@ -68,10 +80,7 @@ public class UserFactory {
         }
         // 更新新的pushId
         user.setPushId(pushId);
-        return Hib.query(session -> {
-            session.saveOrUpdate(user);
-            return user;
-        });
+        return update(user);
     }
 
     /**
@@ -127,10 +136,7 @@ public class UserFactory {
         String token = UUID.randomUUID().toString();
         token = TextUtil.encodeBase64(token);
         user.setToken(token);
-        return Hib.query(session -> {
-            session.saveOrUpdate(user);
-            return user;
-        });
+        return update(user);
     }
     private static User createUser(String account, String password, String name) {
         User user = new User();

@@ -37,6 +37,9 @@ public class UserCard {
     private int following;
 
     public UserCard(final User user) {
+        this(user, false);
+    }
+    public UserCard(final User user, boolean isFollow) {
         this.id = user.getId();
         this.name = user.getName();
         this.portrait = user.getPortrait();
@@ -44,6 +47,7 @@ public class UserCard {
         this.desc = user.getDescription();
         this.sex = user.getSex();
         this.modifyAt = user.getUpdateAt();
+        this.isFollow = isFollow;
         // TODO 得到关注人和粉丝数量
         // user.getFollowers().size(); 懒加载会报错，因为没有session
     }

@@ -13,7 +13,7 @@ import javax.ws.rs.core.MediaType;
 
 // baseurl/api/account
 @Path("/account")
-public class AccountService {
+public class AccountService extends BaseService{
 
     @POST
     @Path("/login")
@@ -70,19 +70,11 @@ public class AccountService {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public ResponseModel<AccountRspModel> bind(
-            // 从请求头中获取token字段
-            @HeaderParam("token") String token,
             @PathParam("pushId") String pushId) {
-        if (Strings.isNullOrEmpty(token)
-        ||  Strings.isNullOrEmpty(pushId)) {
+        if (Strings.isNullOrEmpty(pushId)) {
             return ResponseModel.buildParameterError();
         }
-        User user = UserFactory.findByToken(token);
-        if (user != null) {
-            // 进行pushId绑定操作
-            return bind(user, pushId);
-        }
-        return ResponseModel.buildAccountError();
+        return bind(getSelf(), pushId);
     }
 
     /**
