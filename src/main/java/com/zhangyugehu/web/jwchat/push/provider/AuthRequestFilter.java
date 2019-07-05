@@ -21,7 +21,7 @@ public class AuthRequestFilter implements ContainerRequestFilter {
     public void filter(ContainerRequestContext requestContext) throws IOException {
         String relationPath = ((ContainerRequest)requestContext).getPath(false);
         if (relationPath.startsWith("account/login")
-            ||relationPath.startsWith("account/regster")) {
+            ||relationPath.startsWith("account/register")) {
             return;
         }
         String token = requestContext.getHeaders().getFirst("token");
