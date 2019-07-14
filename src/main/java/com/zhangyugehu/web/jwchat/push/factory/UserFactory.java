@@ -2,11 +2,14 @@ package com.zhangyugehu.web.jwchat.push.factory;
 
 import com.google.common.base.Strings;
 import com.zhangyugehu.web.jwchat.push.bean.db.User;
+import com.zhangyugehu.web.jwchat.push.bean.db.UserFollow;
 import com.zhangyugehu.web.jwchat.push.utils.Hib;
 import com.zhangyugehu.web.jwchat.push.utils.TextUtil;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 public class UserFactory {
 
@@ -33,6 +36,9 @@ public class UserFactory {
                 .createQuery("from User where token=:token")
                 .setParameter("token", finalToken)
                 .uniqueResult());
+    }
+    public static User findById(final String id) {
+        return Hib.query(session -> session.get(User.class, id));
     }
 
     /**
@@ -155,5 +161,89 @@ public class UserFactory {
         pwd = TextUtil.getMD5(pwd);
         // 对称Base64加密
         return TextUtil.encodeBase64(pwd);
+    }
+
+    /**
+     * 获取我的联系人
+     * @param self
+     * @return
+     */
+    public static List<User> contacts(User self) {
+        return Hib.query(session -> {
+            // 由于懒加载所以需要重新加载一次
+            session.load(self, self.getId());
+            Set<UserFollow> followers = self.getFollowing();
+            return followers.stream()
+                    .map(UserFollow::getTarget)
+                    .collect(Collectors.toList());
+        });
+    }
+
+    /**
+     * 关注你操作
+     * @param origin
+     * @param target
+     * @param alias
+     * @return
+     */
+    public static User follow(User origin, User target, String alias) {
+        UserFollow userFollow = getUserFollow(origin, target);
+        if (userFollow != null) {
+            // 已关注
+            return userFollow.getTarget();
+        }
+        return Hib.query(session -> {
+            session.load(origin, origin.getId());
+            session.load(target, target.getId());
+
+            // 我关注人的时候，同事他也要关注我
+            // 所以需要两条UserFollow数据
+            UserFollow originFollow = new UserFollow();
+            originFollow.setOrigin(origin);
+            originFollow.setTarget(target);
+            originFollow.setAlisa(alias);
+
+            UserFollow targetFollow = new UserFollow();
+            targetFollow.setOrigin(target);
+            targetFollow.setTarget(origin);
+
+            session.save(originFollow);
+            session.save(targetFollow);
+
+            return target;
+        });
+    }
+
+    /**
+     * 查询两个人是否已经关注
+     * @param origin
+     * @param target
+     * @return
+     */
+    public static UserFollow getUserFollow(User origin, User target) {
+        return Hib.query(session -> (UserFollow)session
+                .createQuery("from UserFollow where originId =:originId and targetId=:target")
+                .setParameter("originId", origin.getId())
+                .setParameter("targetId", target.getId())
+                .setMaxResults(1)
+                .uniqueResult()
+        );
+    }
+
+    /**
+     * 搜索联系人的实现
+     * @param name
+     * @return 如空name为空，则返回最近的用户
+     */
+    public static List<User> search(String name) {
+        if (Strings.isNullOrEmpty(name)) name = "";
+        final String searchName = "%"+name+"%";
+        return Hib.query(session -> {
+            // 查询条件：name忽略大小写模糊查询，头像和描述必须完善
+            return session.createQuery("from User where lower(name) like :name and portrait is not null and description is not null ")
+                    .setParameter("name", searchName)
+                    .setMaxResults(20)
+                    .list();
+        });
     }
 }
